@@ -7,6 +7,13 @@ app.get('/', (req, res) => {
   const target = process.env.TARGET || 'World';
   res.send(`${target}!\n`);
 });
+app.post('/', (req, res) => {
+  console.log('Trigger_func received a request.');
+
+  const target = process.env.TARGET || 'World';
+  res.send(`${target}!\n`);
+});
+
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
