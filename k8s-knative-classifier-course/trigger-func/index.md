@@ -1,5 +1,5 @@
 ---
-title: "Cloud Events - Node.js"
+title: "Trigger Func - Node.js"
 linkTitle: "Node.js"
 weight: 1
 type: "docs"
