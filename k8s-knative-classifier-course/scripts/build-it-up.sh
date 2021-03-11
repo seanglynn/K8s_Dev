@@ -66,6 +66,11 @@ echo "------------------------------------"
 echo "KUBERNETES startup complete"
 echo "------------------------------------"
 
+echo "12. Creating topics"
+./manage-topics.sh create
+
+
+
 #gcloud beta container clusters create ${CLUSTER_NAME} \
 #    --addons=Istio --istio-config=auth=MTLS_PERMISSIVE \
 #    --cluster-version=CLUSTER_VERSION \

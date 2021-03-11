@@ -18,5 +18,14 @@ kubectl apply --selector events.cloud.google.com/crd-install=true \
 #To complete the installation, run the kubectl apply again for cloud-run-events.yaml without selector:
 kubectl apply --filename https://github.com/google/knative-gcp/releases/download/$KGCP_VERSION/cloud-run-events.yaml
 
+
+# Needed for init scripts
+curl -s https://raw.githubusercontent.com/google/knative-gcp/master/hack/lib.sh --output lib.sh
+gcloud config set run/cluster ${CLUSTER_NAME}
+gcloud config set run/cluster_location ${CLUSTER_ZONE}
+gcloud config set project ${PROJECT_ID}
+
+
+
 #Get Pods
 kubectl get pods --namespace cloud-run-events

@@ -21,4 +21,7 @@ echo "4. Removing cluster = ${CLUSTER_NAME}"
 gcloud container clusters delete ${CLUSTER_NAME} --quiet
 gcloud container clusters list
 
-echo "5. Teardown complete"
+echo "5. Deleting topics"
+./manage-topics.sh delete
+
+echo "6. Teardown complete"
