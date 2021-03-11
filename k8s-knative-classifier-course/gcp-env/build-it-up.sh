@@ -69,10 +69,11 @@ echo "------------------------------------"
 echo "12. Creating topics"
 ./manage-topics.sh create
 
+echo "13. Creating Knative Service dependancies"
+./knative-serving-apply.sh
 
+echo "14. Deployment completed!"
 
-#gcloud beta container clusters create ${CLUSTER_NAME} \
-#    --addons=Istio --istio-config=auth=MTLS_PERMISSIVE \
-#    --cluster-version=CLUSTER_VERSION \
-#    --machine-type=n1-standard-2 \
-#    --num-nodes=4
+echo "15. Pinging trigger func..."
+./scripts/PING_trigger-func.sh
+
