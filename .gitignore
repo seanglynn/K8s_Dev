@@ -1,2 +1,5 @@
 k8s-knative-classifier-course/gcp-env/scripts/PING_hello-world.sh
 .idea
+.DS_Store
+k8s-knative-classifier-course/trigger-func/node_modules/
+k8s-knative-classifier-course/trigger-func/.env
