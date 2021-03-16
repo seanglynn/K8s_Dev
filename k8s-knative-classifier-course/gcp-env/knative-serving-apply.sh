@@ -7,12 +7,6 @@ export KNATIVE_VERSION=0.19.0
 
 echo "1. Spinning up Knative Serving v$KNATIVE_VERSION"
 
-# Not required through K8s - See GCP integ
-#kubectl apply --filename https://github.com/knative/net-istio/releases/download/v${KNATIVE_VERSION}/istio.yaml
-#kubectl apply --filename https://github.com/knative/net-istio/releases/download/v${KNATIVE_VERSION}/net-istio.yaml
-
-echo "1. Creating Knative Service dependencies"
-
 # Knative Serving Core
 kubectl apply --filename https://github.com/knative/serving/releases/download/v$KNATIVE_VERSION/serving-crds.yaml
 kubectl apply --filename https://github.com/knative/serving/releases/download/v$KNATIVE_VERSION/serving-core.yaml

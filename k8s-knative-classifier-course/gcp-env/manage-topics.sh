@@ -3,6 +3,7 @@
 set -e
 set -o pipefail
 
+# create/delete
 action=$1
 
 export TOPIC_1=feedback-created

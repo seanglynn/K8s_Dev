@@ -72,7 +72,8 @@ echo "12. Creating topics"
 echo "13. Creating Knative Service dependancies"
 ./knative-serving-apply.sh
 
-echo "14. Deployment completed!"
+echo "14. Deploying trigger-func"
+kubectl apply -f ../trigger-func/service.yaml
 
 echo "15. Pinging trigger func..."
 ./scripts/PING_trigger-func.sh

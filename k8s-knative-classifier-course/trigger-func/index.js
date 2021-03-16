@@ -1,5 +1,7 @@
 'use strict';
 
+require('dotenv').config()
+
 const express = require('express');
 const uid = require('uid');
 const app = express();
@@ -17,10 +19,12 @@ admin.initializeApp({
 
 // Imports the Google Cloud client library
 const {PubSub} = require('@google-cloud/pubsub');
-projectId = 'your-project-id', // Your Google Cloud Platform project ID
-topicName = 'my-topic', // Name for the new topic to create
-subscriptionName = 'my-sub' // Name for the new subscription to create
-
+const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
+const topicName = process.env.TOPIC_NAME; // Name for the new topic to create
+const subscriptionName = 'feedback-subscription'; // Name for the new subscription to create
+console.log(`projectId: ${projectId}`);
+console.log(`topicName: ${topicName}`);
+console.log(`subscriptionName: ${subscriptionName}`);
 
 
 // constpubsub = require('@google-cloud/pubsub')({
@@ -51,28 +55,32 @@ async function mapRecord() {
     sentimentScore: 0.0,
     sentimentMagnitude: 0.0,
   }
+
+  return rec
 }
 
 async function writeFirebaseRecord(uid) {
   // Obtain a document reference.
   const collection = process.env.COLLECTION_NAME
-  const document = firestore.doc(doc_ref);
+  // const document = firestore.doc(doc_ref);
 
   const docRef = db.collection(collection).doc(uid);
 
-  await docRef.set({
-    first: 'Ada',
-    last: 'Lovelace',
-    born: 1815
-  });
+  // await docRef.set({
+  //   first: 'Ada',
+  //   last: 'Lovelace',
+  //   born: 1815
+  // });
 
 
   var rec = await mapRecord()
+  console.log(`rec type: ${typeof(rec)}`)
+  console.log(rec)
 
   console.log(`New data into the document: ${rec}`);
 
   // Enter new data into the document.
-  await document.set(docRef);
+  await docRef.set(rec);
   console.log(`Written to FB`);
 
 }
@@ -119,7 +127,7 @@ async function readFirebaseRecord(document) {
 
 
 // Write to Firebase instance
-writeFirebaseRecord( uid(16) )
+writeFirebaseRecord( uid.uid(16) )
 
 
 // ==============================
