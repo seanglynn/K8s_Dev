@@ -69,13 +69,6 @@ async function writeFirebaseRecord(uid) {
 
   const docRef = db.collection(collection).doc(uid);
 
-  // await docRef.set({
-  //   first: 'Ada',
-  //   last: 'Lovelace',
-  //   born: 1815
-  // });
-
-
   var rec = await mapRecord()
   console.log(`rec type: ${typeof(rec)}`)
   console.log(rec)
@@ -85,7 +78,7 @@ async function writeFirebaseRecord(uid) {
   // Enter new data into the document.
   await docRef.set(rec);
   console.log(`Written to FB`);
-
+  return rec
 }
 
 async function upsertFirebaseRecord(doc_ref, updated_record) {
@@ -129,8 +122,6 @@ async function readFirebaseRecord(document) {
 
 
 
-// Write to Firebase instance
-writeFirebaseRecord( uid.uid(16) )
 
 
 // ==============================
@@ -193,7 +184,11 @@ app.get('/', (req, res) => {
 app.post('/', (req, res) => {
   console.log('Trigger_func received a request.');
 
-  const target = process.env.TARGET || 'World';
+  // Write to Firebase instance
+  const target = writeFirebaseRecord( uid.uid(16) )
+
+
+  // const target = process.env.TARGET || 'World';
   res.send(`${target}!\n`);
 });
 // Run App
