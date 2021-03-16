@@ -10,11 +10,14 @@ const app = express();
 // [START firestore_limit_to_last_query]
 const {Firestore} = require('@google-cloud/firestore');
 
-const admin = require('firebase-admin');
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./k8s-knative-classifier-306811-firebase-adminsdk-rapal-4a2ea34549.json");
 
 admin.initializeApp({
-  credential: admin.credential.applicationDefault()
+  credential: admin.credential.cert(serviceAccount)
 });
+
 
 
 // Imports the Google Cloud client library

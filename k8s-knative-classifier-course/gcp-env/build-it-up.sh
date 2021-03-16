@@ -22,6 +22,7 @@ gcloud config set compute/zone ${INSTANCE_ZONE}
 echo "4. Enabling gcloud services"
 gcloud services enable compute.googleapis.com
 gcloud services enable container.googleapis.com
+gcloud services enable firebase.googleapis.com
 
 echo "5. Creating container engine cluster"
 gcloud beta container clusters create ${CLUSTER_NAME} \
