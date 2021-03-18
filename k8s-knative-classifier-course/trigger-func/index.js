@@ -12,8 +12,9 @@ const {Firestore} = require('@google-cloud/firestore');
 
 var admin = require("firebase-admin");
 
-var serviceAccount = require("./k8s-knative-classifier-306811-firebase-adminsdk-rapal-4a2ea34549.json");
+var serviceAccount = require("./sglynnbot-key.json");
 
+// TODO - align svc accounts
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -21,13 +22,100 @@ admin.initializeApp({
 
 
 // Imports the Google Cloud client library
-const {PubSub} = require('@google-cloud/pubsub');
+const { PubSub, v1 } = require('@google-cloud/pubsub');
+
 const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
 const topicName = process.env.TOPIC_NAME; // Name for the new topic to create
-const subscriptionName = 'feedback-subscription'; // Name for the new subscription to create
+const subscriptionName = process.env.SUBSCRIPTION_NAME; // Name for the new topic to create
+// const subscriptionName = 'feedback-subscription'; // Name for the new subscription to create
 console.log(`projectId: ${projectId}`);
 console.log(`topicName: ${topicName}`);
 console.log(`subscriptionName: ${subscriptionName}`);
+
+
+// TODO - Init location
+let pubSubClasifierSubscriberClient = new v1.SubscriberClient();
+const pubSubClient = new PubSub({projectId});
+
+const topic_name = process.env.TOPIC_NAME || 'topic_1';
+// const topic =  pubSubClient.topic(topic_name);
+
+
+
+async function getISOTimestamp() { 
+  var isoDateTs = new Date().toISOString()
+  console.debug(`Generated ts: ${isoDateTs}`)
+  return isoDateTs
+}
+
+
+
+async function pushToTopic(topicName, message) { 
+    // Publishes the message as a string, e.g. "Hello, world!" or JSON.stringify(someObject)
+  const dataBuffer = Buffer.from(message.toString());
+
+  var response = "";
+  const pushTimestamp= await getISOTimestamp()
+
+  try {
+    const messageId = await pubSubClient.topic(topicName).publish(dataBuffer);
+    response = `Message ${messageId} published at ${pushTimestamp}.`
+    console.log(response);
+  } catch (error) {
+    console.error(`Received error while publishing: ${error.message}`);
+    process.exitCode = 1;
+  }
+
+}
+
+// WARN - Creates new subscription instance each invocation
+async function createPubSubSubscription(subscriptionName) {
+
+  // let topicSubscriptionName = subscriptionName + '-subsciption' + uid.toString()
+  // console.log(`topicSubscriptionName: ${topicSubscriptionName}`)
+
+  // Creates a subscription on that new topic
+  // const [subscription] = topic.createSubscription(subscriptionName);
+  const [subscription] =   await pubSubClient.topic(topicName).createSubscription(subscriptionName);
+
+  console.log('subscription:')
+  console.log(subscription.toString())
+
+  return subscription
+
+ }
+
+// WARN - Creates new subscription instance each invocation
+async function getPubSubSubscription(subscriptionName) {
+
+  // let topicSubscriptionName = subscriptionName + '-subsciption' + uid.toString()
+  // console.log(`topicSubscriptionName: ${topicSubscriptionName}`)
+
+  // Creates a subscription on that new topic
+  // const [subscription] = topic.createSubscription(subscriptionName);
+  const subscription = await pubSubClient.subscription(subscriptionName);
+
+  console.log('subscription:')
+  console.log(subscription.toString())
+
+  return subscription
+
+ }
+
+
+async function consumeFromTopic(subscription) { 
+  console.log(typeof(subscription))
+  // Receive callbacks for new messages on the subscription
+  subscription.on('message', message => {
+
+    // Get TS
+    const received_at_ts=await getISOTimestamp()
+    console.log(`Received message at: ${received_at_ts}`);
+    console.log(message.data);
+    // process.exit(0);
+  });
+
+}
 
 
 // constpubsub = require('@google-cloud/pubsub')({
@@ -129,32 +217,7 @@ async function readFirebaseRecord(document) {
 // ==============================
 
 // Publish message to GCP PubSub
-async function publish_message(projectId, subscriptionName, message) {
-
-  const pubsub = new PubSub({projectId});
-
-  const topic_name = process.env.TOPIC_NAME || 'topic_1';
-  const topic = await pubsub.topic(topic_name);
-
-  // Creates a subscription on that new topic
-  const [subscription] = await topic.createSubscription(subscriptionName);
-  // Receive callbacks for new messages on the subscription
-  subscription.on('message', message => {
-    console.log('Received message:', message.data.toString());
-    process.exit(0);
-  });
-
-    // // Receive callbacks for errors on the subscription
-    // subscription.on('error', error => {
-    //   console.error('Received error:', error);
-    //   process.exit(1);
-    // });
-  
-    // // Send a message to the topic
-    // topic.publish(Buffer.from('Test message!'));  
-
-
-  // const message = 'Hello world!'
+async function publish_message(message) {
 
   topic.publish(message).then((data) => {
     const messageId = data[0][0];
@@ -174,23 +237,36 @@ async function publish_message(projectId, subscriptionName, message) {
 //TODO - Security++
 
 // GET Svc
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   console.log('Trigger_func received a request.');
-
+ 
   const target = process.env.TARGET || 'World';
   res.send(`${target}!\n`);
 });
+
 // POST Svc
-app.post('/', (req, res) => {
+app.post('/', async (req, res) => {
   console.log('Trigger_func received a request.');
 
+  const instance_uid = uid.uid(16)
   // Write to Firebase instance
-  const target = writeFirebaseRecord( uid.uid(16) )
+  const record = await writeFirebaseRecord( instance_uid )
 
+  var subscription = await getPubSubSubscription(subscriptionName) 
+
+  var target = await consumeFromTopic(subscription);
+  console.debug(`consumeFromTopic: ${target} `);
+
+  const resp_msg = await pushToTopic(topic_name, record);
+  console.debug(`pushToTopic: ${resp_msg} `);
+
+  // const resp_msg = publish_message(topic_name, record)
+  // consumeFromTopic(topic_name)
 
   // const target = process.env.TARGET || 'World';
-  res.send(`${target}!\n`);
+  res.send(resp_msg);
 });
+
 // Run App
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
