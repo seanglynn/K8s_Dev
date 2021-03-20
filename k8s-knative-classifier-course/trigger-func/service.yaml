@@ -3,11 +3,16 @@ kind: Service
 metadata:
   name: trigger-func
   namespace: default
+  labels:
+    app: trigger-func
 spec:
   template:
+    metadata:
+      labels:
+        app: trigger-func
     spec:
       containers:
-      - image: docker.io/sglynn11/trigger_func
+      - image: gcr.io/k8s-knative-classifier-306811/trigger-func
         env:
         - name: TARGET
           value: "Dia duit ar domhan"

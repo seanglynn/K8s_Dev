@@ -64,7 +64,7 @@ async function getISOTimestamp() {
       console.error(`Received error while publishing: ${error.message}`);
       process.exitCode = 1;
     }
-  
+    // return response
   }
   
   // WARN - Creates new subscription instance each invocation
@@ -265,8 +265,8 @@ router
       await consumeFromTopic(subscription);
     
       // Push to PubSub Topic
-      const resp_msg = await pushToTopic(topic_name, record);
-      console.debug(`pushToTopic: ${resp_msg} `);
+      await pushToTopic(topic_name, record);
+      // console.debug(`pushToTopic: ${resp_msg} `);
       
       res.status(201).send(rec);
     //   res.send(feedbackJson)

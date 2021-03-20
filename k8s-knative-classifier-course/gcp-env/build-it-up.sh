@@ -23,6 +23,8 @@ echo "4. Enabling gcloud services"
 gcloud services enable compute.googleapis.com
 gcloud services enable container.googleapis.com
 gcloud services enable firebase.googleapis.com
+gcloud services enable containerregistry.googleapis.com
+
 
 echo "5. Creating container engine cluster"
 gcloud beta container clusters create ${CLUSTER_NAME} \
@@ -73,9 +75,12 @@ echo "12. Creating topics"
 echo "13. Creating Knative Service dependancies"
 ./knative-serving-apply.sh
 
-echo "14. Deploying trigger-func"
+echo "14. Creating Knative Eventing dependancies"
+./knative-eventing-apply.sh
+
+echo "15. Deploying trigger-func"
 kubectl apply -f ../trigger-func/service.yaml
 
-echo "15. Pinging trigger func..."
+echo "16. Pinging trigger func..."
 ./scripts/PING_trigger-func.sh
 

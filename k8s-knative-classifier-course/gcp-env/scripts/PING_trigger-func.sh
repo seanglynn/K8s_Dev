@@ -14,7 +14,7 @@ echo "expect 200:"
 curl -H "Accept: application/text" \
   -H "Content-type: application/json"  \
   -s -o /dev/null -w "%{http_code}" \
-  -X POST -d '{"Dia duit":"ar domhain"}' \
+  -X POST -d '{"feedback":"Yeah yeah yeah it was ok.."}' \
   $HOST_URL
 
 
