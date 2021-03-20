@@ -11,3 +11,5 @@ spec:
         env:
         - name: TARGET
           value: "Dia duit ar domhan"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/usr/src/app/sglynnbot-key.json"
