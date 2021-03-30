@@ -10,7 +10,7 @@ export HOST_URL=$(kubectl get ksvc $APP_NAME -o=jsonpath='{.status.url}')
 echo "INGRESS_IP_ADDRESS: ${INGRESS_IP_ADDRESS}"
 echo "HOST_URL: ${HOST_URL}"
 
-echo "expect 200:"
+echo "expect 201:"
 curl -H "Accept: application/text" \
   -H "Content-type: application/json"  \
   -s -o /dev/null -w "%{http_code}" \

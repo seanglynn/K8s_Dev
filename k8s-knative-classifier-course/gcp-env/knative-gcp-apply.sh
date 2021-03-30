@@ -7,8 +7,7 @@ echo "1. Spinning up Knative GCP instance"
 
 #Pick a knative-gcp release version:
 export KGCP_VERSION=v0.19.0
-
-#kubectl apply --filename https://github.com/knative/net-istio/releases/download/v$KGCP_VERSION/release.yaml
+kubectl apply --filename https://github.com/knative/net-istio/releases/download/$KGCP_VERSION/release.yaml
 
 #First install the pre-install job by running the kubectl apply for cloud-run-events-pre-install-jobs.yaml. Skip this step if you are installing a release before v0.18.0.
 kubectl apply --filename https://github.com/google/knative-gcp/releases/download/$KGCP_VERSION/cloud-run-events-pre-install-jobs.yaml

@@ -72,11 +72,17 @@ echo "------------------------------------"
 echo "12. Creating topics"
 ./manage-topics.sh create
 
+sleep 10
+
 echo "13. Creating Knative Service dependancies"
 ./knative-serving-apply.sh
 
+sleep 10
+
 echo "14. Creating Knative Eventing dependancies"
 ./knative-eventing-apply.sh
+
+sleep 10
 
 echo "15. Deploying trigger-func"
 kubectl apply -f ../trigger-func/service.yaml
