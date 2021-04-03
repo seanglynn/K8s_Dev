@@ -1,104 +1,48 @@
-/*
-Copyright 2020 The Knative Authors
+'use strict';
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+require('dotenv').config()
 
-    http://www.apache.org/licenses/LICENSE-2.0
+const express = require('express');
+// const uid = require('uid');
+const app = express();
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+const recommendations = require('./routes/recommendations')
+const bodyParser = require('body-parser')
 
-const express = require('express')
-const { CloudEvent, Emitter, HTTP } = require('cloudevents')
-const PORT = process.env.PORT || 8080
-const target = process.env.K_SINK
-const app = express()
-const axios = require('axios').default;
+// Imports the Google Cloud client library
+const { PubSub, v1 } = require('@google-cloud/pubsub');
 
-const main = () => {
-  app.listen(PORT, function () {
-    console.log(`Cookie monster is hungry for some cloudevents on port ${PORT}!`)
-    const modeMessage = target ? `send cloudevents to K_SINK: ${target}` : 'reply back with cloudevents'
-    console.log(`Cookie monster is going to ${modeMessage}`)
-  })
-}
+const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
+const topicName = process.env.TOPIC_NAME; // Name for the new topic to create
+const subscriptionName = process.env.SUBSCRIPTION_NAME; // Name for the new topic to create
+// const subscriptionName = 'feedback-subscription'; // Name for the new subscription to create
+console.log(`projectId: ${projectId}`);
+console.log(`topicName: ${topicName}`);
+console.log(`subscriptionName: ${subscriptionName}`);
 
-// handle shared the logic for producing the Response event from the Request.
-const handle = (data) => {
-  return { message: `Hello, ${data.name ? data.name : 'nameless'}` }
-}
 
-// receiveAndSend responds with ack, and send a new event forward
-const receiveAndSend = (cloudEvent, res) => {
-  const data = handle(cloudEvent.data)
-  const ce = new CloudEvent({
-    type: 'dev.knative.docs.sample',
-    source: 'https://github.com/knative/docs/docs/serving/samples/cloudevents/cloudevents-nodejs',
-    data
-  })
-  const message = HTTP.binary(ce); // Or HTTP.structured(ce))
+let pubSubClasifierSubscriberClient = new v1.SubscriberClient();
+const pubSubClient = new PubSub({projectId});
 
-  // Reply back to dispatcher/client as soon as possible
-  res.status(202).end()
+const topic_name = process.env.TOPIC_NAME || 'topic_1';
+// const topic =  pubSubClient.topic(topic_name);
 
-  axios({
-    method: 'post',
-    url: target,
-    data: message.body,
-    headers: message.headers,
-  })
-  .then((responseSink) => {
-    console.log(`Sent event: ${JSON.stringify(ce, null, 2)}`)
-    console.log(`K_SINK responded: ${JSON.stringify({ status: responseSink.status, headers: responseSink.headers, data: responseSink.data }, null, 2)}`)
-  })
-  .catch(console.error)
 
-}
-
-// receiveAndReply responds with new event
-const receiveAndReply = (cloudEvent, res) => {
-  const data = handle(cloudEvent.data)
-  const ce = new CloudEvent({
-    type: 'dev.knative.docs.sample',
-    source: 'https://github.com/knative/docs/docs/serving/samples/cloudevents/cloudevents-nodejs',
-    data
+app
+  .use(bodyParser.json()) // accept and parse json data
+  .use(recommendations) // Call recommendations route
+  .use((err, req, res, next) => { // error handling
+    res.status(err.status || 500)
+    if (err.status === 400) {
+      res.send({'error': 'Could not decode feedback request: JSON parsing failed!!'})
+    } else {
+      res.send({'error': `${err.status} - ${err}`})
+    }
   })
 
-  console.log(`Reply event: ${JSON.stringify(ce, null, 2)}`)
-  const message = HTTP.binary(ce);
-  res.set(message.headers)
-  res.status(200).send(message.body)
-}
 
-app.use((req, res, next) => {
-  let data = ''
-  req.setEncoding('utf8')
-  req.on('data', function (chunk) {
-    data += chunk
-  })
-  req.on('end', function () {
-    req.body = data
-    next()
-  })
-})
-
-app.post('/', function (req, res) {
-  try {
-    const event = HTTP.toEvent({headers: req.headers, body: req.body})
-    console.log(`Accepted event: ${JSON.stringify(event, null, 2)}`)
-    target ? receiveAndSend(event, res) : receiveAndReply(event, res)
-  } catch (err) {
-    console.error(err)
-    res.status(415)
-      .header('Content-Type', 'application/json')
-      .send(JSON.stringify(err))
-  }
-})
-
-main()
+// Run App
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+  console.log('Trigger_func listening on port', port);
+});
