@@ -12,9 +12,7 @@ spec:
         app: trigger-func
     spec:
       containers:
-      - image: gcr.io/k8s-knative-classifier-306811/trigger-func
+      - image: gcr.io/sodium-hangar-309319/trigger-func
         env:
-        - name: TARGET
-          value: "Dia duit ar domhan"
         - name: GOOGLE_APPLICATION_CREDENTIALS
           value: "/usr/src/app/sglynnbot-key.json"

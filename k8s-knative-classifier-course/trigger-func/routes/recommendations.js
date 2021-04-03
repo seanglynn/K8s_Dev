@@ -51,7 +51,7 @@ async function getISOTimestamp() {
   
   async function pushToTopic(topicName, message) { 
       // Publishes the message as a string, e.g. "Hello, world!" or JSON.stringify(someObject)
-    const dataBuffer = Buffer.from(message.toString());
+    const dataBuffer = Buffer.from(JSON.stringify(message));
   
     var response = "";
     const pushTimestamp= await getISOTimestamp()
@@ -260,12 +260,12 @@ router
       const record = await writeFirebaseRecord( rec, instance_uid )
 
       // Get topic subscription - Consume & print messages to sdtout while running service
-      var subscription = await getPubSubSubscription(subscriptionName) 
+      // var subscription = await getPubSubSubscription(subscriptionName) 
       // Tmp: to ensure messages are pushed to topic
-      await consumeFromTopic(subscription);
+      // await consumeFromTopic(subscription);
     
       // Push to PubSub Topic
-      await pushToTopic(topic_name, record);
+      await pushToTopic(topic_name, rec);
       // console.debug(`pushToTopic: ${resp_msg} `);
       
       res.status(201).send(rec);

@@ -40,6 +40,11 @@ const topic_name = process.env.TOPIC_NAME || 'topic_1';
 // const topic =  pubSubClient.topic(topic_name);
 
 
+// NLP Integ
+const language = require('@google-cloud/language');
+// Instantiates a client
+const client = new language.LanguageServiceClient();
+
 
 async function getISOTimestamp() { 
     var isoDateTs = new Date().toISOString()
@@ -123,15 +128,47 @@ async function getISOTimestamp() {
   const db = admin.firestore();
 
 
+  async function getNLPFeedback(feedback) { 
 
+    const document = {
+      content: feedback,
+      type: 'PLAIN_TEXT',
+    };  
+  
+    // Detects the sentiment of the text
+    const [result] = await client.analyzeSentiment({document: document});
+    const sentiment = result.documentSentiment;
+
+    console.log(`Text: ${text}`);
+    console.log(`Sentiment score: ${sentiment.score}`);
+    console.log(`Sentiment magnitude: ${sentiment.magnitude}`);
+  
+  }
 
 
   const main = async () => {
     var subscription = await getPubSubSubscription(subscriptionName);
     // Tmp: to ensure messages are pushed to topic
     subscription.on('message', message => {
-      console.log(`Message received: `);
-      console.log(message.data.toString('utf8'));
+      // console.log(`Message received: `);
+      // console.log(message.data.toString('utf8'));
+      // const received_msg = (message.data);
+      // // const received_msg = JSON.stringify(message.data);
+      // console.log(typeof(received_msg));
+      // console.log(`received_msg: ${received_msg}`);
+      // console.log(received_msg);
+      console.log(`Received message ${message.id}:`);
+      console.log(`\tData: ${JSON.stringify(message.data)}`);
+      console.log(`\tAttributes: ${message.attributes}`);
+
+      const received_msg = message.data;
+
+      const feedback = received_msg.feedback;
+
+      getNLPFeedback(feedback);
+
+
+
     });
     console.log("Done");
 

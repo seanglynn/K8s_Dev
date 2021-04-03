@@ -16,15 +16,17 @@ export CLUSTER_VERSION=1.17.8-gke.17
 echo "2. Set project = $GCLOUD_PROJECT"
 gcloud config set project $GCLOUD_PROJECT
 
-echo "3. Set compute/zone = ${INSTANCE_ZONE}"
-gcloud config set compute/zone ${INSTANCE_ZONE}
+
 
 echo "4. Enabling gcloud services"
 gcloud services enable compute.googleapis.com
 gcloud services enable container.googleapis.com
 gcloud services enable firebase.googleapis.com
+gcloud services enable firestore.googleapis.com
 gcloud services enable containerregistry.googleapis.com
-
+gcloud services enable storage-component.googleapis.com
+gcloud services enable storage-api.googleapis.com
+gcloud services enable automl.googleapis.com
 
 echo "5. Creating container engine cluster"
 gcloud beta container clusters create ${CLUSTER_NAME} \
@@ -87,6 +89,9 @@ sleep 10
 echo "15. Deploying trigger-func"
 kubectl apply -f ../trigger-func/service.yaml
 
-echo "16. Pinging trigger func..."
+echo "16. Deploying analysis-func"
+kubectl apply -f ../analysis-func/service.yaml
+
+echo "17. Pinging trigger func..."
 ./scripts/PING_trigger-func.sh
 
