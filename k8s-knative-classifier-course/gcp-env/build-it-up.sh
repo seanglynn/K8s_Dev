@@ -27,6 +27,7 @@ gcloud services enable containerregistry.googleapis.com
 gcloud services enable storage-component.googleapis.com
 gcloud services enable storage-api.googleapis.com
 gcloud services enable automl.googleapis.com
+gcloud services cloudresourcemanager.googleapis.com
 
 echo "5. Creating container engine cluster"
 gcloud beta container clusters create ${CLUSTER_NAME} \
@@ -92,6 +93,9 @@ kubectl apply -f ../trigger-func/service.yaml
 echo "16. Deploying analysis-func"
 kubectl apply -f ../analysis-func/service.yaml
 
-echo "17. Pinging trigger func..."
+echo "17. Assigning permissions to service account"
+gcloud projects add-iam-policy-binding sodium-hangar-309319 --member="serviceAccount:sglynnbot@sodium-hangar-309319.iam.gserviceaccount.com" --role="roles/owner"
+
+echo "18. Pinging trigger func..."
 ./scripts/PING_trigger-func.sh
 
