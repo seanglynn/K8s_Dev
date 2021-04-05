@@ -25,7 +25,6 @@ let pubSubClasifierSubscriberClient = new v1.SubscriberClient();
 const pubSubClient = new PubSub({projectId});
 
 const topic_name = process.env.TOPIC_NAME || 'topic_1';
-// const topic =  pubSubClient.topic(topic_name);
 
 
 app

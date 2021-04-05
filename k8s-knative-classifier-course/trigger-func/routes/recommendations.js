@@ -37,9 +37,6 @@ let pubSubClasifierSubscriberClient = new v1.SubscriberClient();
 const pubSubClient = new PubSub({projectId});
 
 const topic_name = process.env.TOPIC_NAME || 'topic_1';
-// const topic =  pubSubClient.topic(topic_name);
-
-
 
 async function getISOTimestamp() { 
     var isoDateTs = new Date().toISOString()
@@ -47,34 +44,27 @@ async function getISOTimestamp() {
     return isoDateTs
   }
   
-  
-  
   async function pushToTopic(topicName, message) { 
       // Publishes the message as a string, e.g. "Hello, world!" or JSON.stringify(someObject)
     const dataBuffer = Buffer.from(JSON.stringify(message));
   
     var response = "";
+    var messageId = "";
     const pushTimestamp= await getISOTimestamp()
   
     try {
-      const messageId = await pubSubClient.topic(topicName).publish(dataBuffer);
+      messageId = await pubSubClient.topic(topicName).publish(dataBuffer);
       response = `Message ${messageId} published at ${pushTimestamp}.`
       console.log(response);
     } catch (error) {
       console.error(`Received error while publishing: ${error.message}`);
       process.exitCode = 1;
     }
-    // return response
+    return messageId
   }
   
-  // WARN - Creates new subscription instance each invocation
   async function createPubSubSubscription(subscriptionName) {
   
-    // let topicSubscriptionName = subscriptionName + '-subsciption' + uid.toString()
-    // console.log(`topicSubscriptionName: ${topicSubscriptionName}`)
-  
-    // Creates a subscription on that new topic
-    // const [subscription] = topic.createSubscription(subscriptionName);
     const [subscription] =   await pubSubClient.topic(topicName).createSubscription(subscriptionName);
   
     console.log('subscription:')
@@ -84,14 +74,8 @@ async function getISOTimestamp() {
   
    }
   
-  // WARN - Creates new subscription instance each invocation
   async function getPubSubSubscription(subscriptionName) {
   
-    // let topicSubscriptionName = subscriptionName + '-subsciption' + uid.toString()
-    // console.log(`topicSubscriptionName: ${topicSubscriptionName}`)
-  
-    // Creates a subscription on that new topic
-    // const [subscription] = topic.createSubscription(subscriptionName);
     const subscription = await pubSubClient.subscription(subscriptionName);
   
     console.log('subscription:')
@@ -108,25 +92,41 @@ async function getISOTimestamp() {
     await subscription.on('message', message => {
       console.log(`Message received: `);
       console.log(message.data.toString('utf8'));
+      message.ack();
+
+    });
+  
+  }
+  async function awaitClassificationFromTopic(subscription, instance_uid) { 
+
+    // Receive callbacks for new messages on the subscription
+    subscription.on('message', message => {
+      const received_msg_str = (message.data.toString('utf8'));
+      console.log(`received_msg_str: ${received_msg_str}`);
+      console.log(received_msg_str);
+      console.log(typeof(received_msg_str));
+
+      const doc_id = received_msg_str.id;
+      console.log(`doc_id: ${doc_id}`);
+
+      if (doc_id == instance_uid)
+      {
+        console.log("message.id == messageId");
+        console.log(`Message received: `);
+        console.log(message.data.toString('utf8'));
+
+        message.ack();
+
+        return message.data;
+      }
     });
   
   }
   
-  
-  // constpubsub = require('@google-cloud/pubsub')({
-  //   // Set pubsub project ID
-  //   projectId: process.env.PUBSUB_PROJECT_ID
-  // });
-  
-  
-  // TODO - Probably not the safest but for now
   const db = admin.firestore();
   
-  // // Create a new client
-  // const firestore = new Firestore();
-  
   // ==============================
-  // 1. WRITE TO FIREBASE
+  // 1. WRITE INITIAL REC TO FIREBASE
   // ==============================
   async function mapRecord(feedback) {
   
@@ -179,9 +179,7 @@ async function getISOTimestamp() {
     console.log(`Written to FB`);
   
   }
-  
-  
-  
+   
   async function deleteFirebaseRecord(document) {
     // Delete the document.
     await document.delete();
@@ -203,13 +201,6 @@ async function getISOTimestamp() {
   }
   
   
-  
-  
-  
-  // ==============================
-  // 2. PUBSUB FUNCTIONALITY START
-  // ==============================
-  
   // Publish message to GCP PubSub
   async function publish_message(message) {
   
@@ -217,20 +208,7 @@ async function getISOTimestamp() {
       const messageId = data[0][0];
       console.log(`Message was published with ID: ${messageId}`);
     });
-  }
-  // ==================================
-  // 2. PUBSUB FUNCTIONALITY END
-  // ==================================
-  
-  
-  // ================================
-  // 3. EXPRESS APP FUNCTIONALITY START
-  // ================================
-  
-  //TODO - Handle invalid requests
-  //TODO - Security++
-
-
+  }  
 
 router
   .get('/', async (req, res) => { 
@@ -255,21 +233,24 @@ router
 
       // Map feedback to JSON record
       var rec = await mapRecord(feedbackJson)
+      rec.id = instance_uid;
 
       // Write out JSON record to FB
       const record = await writeFirebaseRecord( rec, instance_uid )
 
       // Get topic subscription - Consume & print messages to sdtout while running service
-      // var subscription = await getPubSubSubscription(subscriptionName) 
-      // Tmp: to ensure messages are pushed to topic
-      // await consumeFromTopic(subscription);
-    
       // Push to PubSub Topic
-      await pushToTopic(topic_name, rec);
-      // console.debug(`pushToTopic: ${resp_msg} `);
-      
-      res.status(201).send(rec);
-    //   res.send(feedbackJson)
+      const messageId = await pushToTopic(topic_name, rec);
+      console.log(`Pushed ${messageId} to ${topic_name}`)
+
+      // Now we wait for the response
+      var subscription = await getPubSubSubscription(subscriptionName) 
+      // Tmp: to ensure messages are pushed to topic
+      const classificationResult = await awaitClassificationFromTopic(subscription, instance_uid);
+      console.log(classificationResult);
+
+      res.status(201).send(classificationResult);
+
     } else {
       res.send({'error': 'post request is empty'})
     }
