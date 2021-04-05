@@ -11,3 +11,7 @@ export TOPIC_2=feedback-classified
 
 gcloud pubsub topics $action $TOPIC_1
 gcloud pubsub topics $action $TOPIC_2
+
+gcloud pubsub subscriptions $action ${TOPIC_1}-subscription --topic=$TOPIC_1
+gcloud pubsub subscriptions $action ${TOPIC_2}-subscription --topic=$TOPIC_2
+

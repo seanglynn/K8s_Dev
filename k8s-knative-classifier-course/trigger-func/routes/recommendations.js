@@ -92,6 +92,7 @@ async function getISOTimestamp() {
     await subscription.on('message', message => {
       console.log(`Message received: `);
       console.log(message.data.toString('utf8'));
+      console.log(message);
       message.ack();
 
     });
@@ -100,13 +101,20 @@ async function getISOTimestamp() {
   async function awaitClassificationFromTopic(subscription, instance_uid) { 
 
     // Receive callbacks for new messages on the subscription
-    subscription.on('message', message => {
-      const received_msg_str = (message.data.toString('utf8'));
+    subscription.on('message', async (message) => {
+      console.log(message);
+      console.log(`Received message ${message.id}:`);
+      const received_msg_str = message.data.toString('utf8');
+      // const received_msg_str = (message.data.toString('utf8'));
       console.log(`received_msg_str: ${received_msg_str}`);
       console.log(received_msg_str);
-      console.log(typeof(received_msg_str));
 
-      const doc_id = received_msg_str.id;
+
+      const received_msg = JSON.parse(received_msg_str);
+      console.log(`received_msg:`);
+      console.log(received_msg);
+
+      const doc_id = received_msg.id;
       console.log(`doc_id: ${doc_id}`);
 
       if (doc_id == instance_uid)
@@ -119,6 +127,7 @@ async function getISOTimestamp() {
 
         return message.data;
       }
+  
     });
   
   }
@@ -132,17 +141,16 @@ async function getISOTimestamp() {
   
     var writeToDbIsoDate = new Date().toISOString()
   
-    // TODO - Update rec
-    const rec = {
+    const initial_rec = {
       createdAt: writeToDbIsoDate,
       feedback: feedback,
-      classified: true,
+      classified: false,
       classifiedAt: writeToDbIsoDate,
       sentimentScore: 0.0,
       sentimentMagnitude: 0.0,
     }
   
-    return rec
+    return initial_rec
   }
   
   async function writeFirebaseRecord(rec, uid) {

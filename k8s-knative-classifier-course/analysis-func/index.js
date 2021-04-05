@@ -51,7 +51,7 @@ async function getISOTimestamp() {
   
   async function pushToTopic(topicName, message) { 
       // Publishes the message as a string, e.g. "Hello, world!" or JSON.stringify(someObject)
-    const dataBuffer = Buffer.from(message.toString());
+    const dataBuffer = Buffer.from(JSON.stringify(message));
   
     var response = "";
     const pushTimestamp= await getISOTimestamp()
@@ -120,7 +120,6 @@ async function getISOTimestamp() {
 
   const main = async () => {
     var subscription = await getPubSubSubscription(subscriptionName);
-    // Tmp: to ensure messages are pushed to topic
     
     subscription.on('message', async (message) => {
       console.log(`Received message ${message.id}:`);
@@ -137,12 +136,15 @@ async function getISOTimestamp() {
 
       const nlp_results = await getNLPFeedback(feedback);
   
-      const mapped_record = await mapRecord(feedback, nlp_results)
+      var mapped_record = await mapRecord(feedback, nlp_results);
       console.log('mapped_record:');
       console.log(mapped_record);
 
       // Write out JSON record to FB
       const record = await writeFirebaseRecord( mapped_record, doc_id )
+
+      // Append UID
+      mapped_record.id = doc_id;
 
       await pushToTopic(classifiedTopicName, mapped_record);
 
