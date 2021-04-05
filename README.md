@@ -16,3 +16,9 @@ Deliverables inside the following folders:
 ``
 ./k8s-knative-classifier-course/trigger-func
 ``
+
+**analysis-func** - folder including the analysis NodeJS function project:
+
+``
+./k8s-knative-classifier-course/analysis-func
+``
