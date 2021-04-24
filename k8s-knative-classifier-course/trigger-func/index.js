@@ -32,9 +32,17 @@ app
   .use(recommendations) // Call recommendations route
   .use((err, req, res, next) => { // error handling
     res.status(err.status || 500)
+      // Validation
     if (err.status === 400) {
       res.send({'error': 'Could not decode feedback request: JSON parsing failed!!'})
-    } else {
+    }
+    else if (_.isNil(req.body.feedback)) {
+      const msg = 'Missing input param "feedback".';
+      console.log(msg);
+      res.status(400).send(msg);
+      return;
+    } 
+    else {
       res.send({'error': `${err.status} - ${err}`})
     }
   })

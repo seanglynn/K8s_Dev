@@ -131,7 +131,9 @@ async function getISOTimestamp() {
       console.log(`received_msg:`);
       console.log(received_msg);
 
-      const doc_id = received_msg.id;
+      const doc_id = received_msg.doc_id;
+      console.log(`doc_id: ${doc_id}`);
+
       const feedback = received_msg.feedback;
 
       const nlp_results = await getNLPFeedback(feedback);
