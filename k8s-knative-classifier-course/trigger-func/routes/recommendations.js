@@ -4,16 +4,21 @@ require('dotenv').config()
 
 const express = require('express')
 const router = express.Router()
-
 const uid = require('uid');
-
-
-// [START firestore_limit_to_last_query]
 const {Firestore} = require('@google-cloud/firestore');
 
-var admin = require("firebase-admin");
+const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
+const topicName = process.env.TOPIC_NAME; // Name for the new topic to create
+const subscriptionName = process.env.SUBSCRIPTION_NAME; // Name for the new topic to create
+const svcAccKeyLocation = process.env.GCP_SVC_ACC_KEY
+console.log(`projectId: ${projectId}`);
+console.log(`topicName: ${topicName}`);
+console.log(`subscriptionName: ${subscriptionName}`);
+console.log(`svcAccKeyLocation: ${svcAccKeyLocation}`);
 
-var serviceAccount = require("../sglynnbot-key.json");
+
+var admin = require("firebase-admin");
+var serviceAccount = require(`.${svcAccKeyLocation}`);
 
 // TODO - align svc accounts
 admin.initializeApp({
@@ -22,14 +27,6 @@ admin.initializeApp({
 
 // Imports the Google Cloud client library
 const { PubSub, v1 } = require('@google-cloud/pubsub');
-
-const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
-const topicName = process.env.TOPIC_NAME; // Name for the new topic to create
-const subscriptionName = process.env.SUBSCRIPTION_NAME; // Name for the new topic to create
-// const subscriptionName = 'feedback-subscription'; // Name for the new subscription to create
-console.log(`projectId: ${projectId}`);
-console.log(`topicName: ${topicName}`);
-console.log(`subscriptionName: ${subscriptionName}`);
 
 
 // TODO - Init location
@@ -65,11 +62,7 @@ async function getISOTimestamp() {
   
   async function createPubSubSubscription(subscriptionName) {
   
-    const [subscription] =   await pubSubClient.topic(topicName).createSubscription(subscriptionName);
-  
-    console.log('subscription:')
-    console.log(subscription.toString())
-  
+    const [subscription] =   await pubSubClient.topic(topicName).createSubscription(subscriptionName);  
     return subscription
   
    }
@@ -92,33 +85,37 @@ async function getISOTimestamp() {
     await subscription.on('message', message => {
       console.log(`Message received: `);
       console.log(message.data.toString('utf8'));
+      console.log(message);
       message.ack();
 
     });
-  
   }
-  async function awaitClassificationFromTopic(subscription, instance_uid) { 
-
-    // Receive callbacks for new messages on the subscription
-    subscription.on('message', message => {
-      const received_msg_str = (message.data.toString('utf8'));
-      console.log(`received_msg_str: ${received_msg_str}`);
-      console.log(received_msg_str);
-      console.log(typeof(received_msg_str));
-
-      const doc_id = received_msg_str.id;
+  async function match_message(message, instance_uid,  doc) { 
+      const doc_id = doc.id;
       console.log(`doc_id: ${doc_id}`);
-
+      console.log(`instance_uid: ${instance_uid}`);
       if (doc_id == instance_uid)
       {
         console.log("message.id == messageId");
-        console.log(`Message received: `);
-        console.log(message.data.toString('utf8'));
-
+        
         message.ack();
 
         return message.data;
       }
+  }
+  async function awaitClassificationFromTopic(subscription, instance_uid) { 
+
+    // Receive callbacks for new messages on the subscription
+    await subscription.on('message', async (message) => {
+      console.log(message);
+      const received_msg_str = message.data.toString('utf8');
+      const received_msg = JSON.parse(received_msg_str);
+      console.log(`received_msg:`);
+      console.log(received_msg);
+
+      const result = await match_message(message, instance_uid, received_msg)
+      console.log(`result: ${result}`);
+      return received_msg
     });
   
   }
@@ -132,17 +129,16 @@ async function getISOTimestamp() {
   
     var writeToDbIsoDate = new Date().toISOString()
   
-    // TODO - Update rec
-    const rec = {
+    const initial_rec = {
       createdAt: writeToDbIsoDate,
       feedback: feedback,
-      classified: true,
+      classified: false,
       classifiedAt: writeToDbIsoDate,
       sentimentScore: 0.0,
       sentimentMagnitude: 0.0,
     }
   
-    return rec
+    return initial_rec
   }
   
   async function writeFirebaseRecord(rec, uid) {
@@ -231,26 +227,34 @@ router
       // Instance UID
       const instance_uid = uid.uid(16)
 
-      // Map feedback to JSON record
-      var rec = await mapRecord(feedbackJson)
-      rec.id = instance_uid;
+      try {
+        // Map feedback to JSON record
+        var rec = await mapRecord(feedbackJson)
+        rec.doc_id = instance_uid;
 
-      // Write out JSON record to FB
-      const record = await writeFirebaseRecord( rec, instance_uid )
+        // Write out JSON record to FB
+        const record = await writeFirebaseRecord( rec, instance_uid )
 
-      // Get topic subscription - Consume & print messages to sdtout while running service
-      // Push to PubSub Topic
-      const messageId = await pushToTopic(topic_name, rec);
-      console.log(`Pushed ${messageId} to ${topic_name}`)
+        // Get topic subscription - Consume & print messages to sdtout while running service
+        // Push to PubSub Topic
+        const messageId = await pushToTopic(topic_name, rec);
+        console.log(`Pushed ${messageId} to ${topic_name}`)
 
-      // Now we wait for the response
-      var subscription = await getPubSubSubscription(subscriptionName) 
-      // Tmp: to ensure messages are pushed to topic
-      const classificationResult = await awaitClassificationFromTopic(subscription, instance_uid);
-      console.log(classificationResult);
+        // Now we wait for the response
+        var subscription = await getPubSubSubscription(subscriptionName) 
+        // Tmp: to ensure messages are pushed to topic
+        const classificationResult = await awaitClassificationFromTopic(subscription, instance_uid);
+        console.log(`classificationResult: ${classificationResult}`);
 
-      res.status(201).send(classificationResult);
-
+        res.status(201).send(instance_uid);
+        return;
+      } catch (e) {
+        console.log(`Error saving feedback and publishing Pub/Sub message (new feedback ID = ${instance_uid}):`, e);
+    
+        res.status(500).send();
+        return;
+    }
+  
     } else {
       res.send({'error': 'post request is empty'})
     }

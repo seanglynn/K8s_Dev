@@ -27,7 +27,7 @@ gcloud services enable containerregistry.googleapis.com
 gcloud services enable storage-component.googleapis.com
 gcloud services enable storage-api.googleapis.com
 gcloud services enable automl.googleapis.com
-gcloud services cloudresourcemanager.googleapis.com
+gcloud services enable cloudresourcemanager.googleapis.com
 
 echo "5. Creating container engine cluster"
 gcloud beta container clusters create ${CLUSTER_NAME} \
@@ -72,7 +72,7 @@ echo "------------------------------------"
 echo "KUBERNETES startup complete"
 echo "------------------------------------"
 
-echo "12. Creating topics"
+echo "12. Creating PubSub topics and subscriptions"
 ./manage-topics.sh create
 
 sleep 10
@@ -94,7 +94,7 @@ echo "16. Deploying analysis-func"
 kubectl apply -f ../analysis-func/service.yaml
 
 echo "17. Assigning permissions to service account"
-gcloud projects add-iam-policy-binding sodium-hangar-309319 --member="serviceAccount:sglynnbot@sodium-hangar-309319.iam.gserviceaccount.com" --role="roles/owner"
+gcloud projects add-iam-policy-binding ${GCLOUD_PROJECT} --member="serviceAccount:sglynnbot@${GCLOUD_PROJECT}.iam.gserviceaccount.com" --role="roles/owner"
 
 echo "18. Pinging trigger func..."
 ./scripts/PING_trigger-func.sh

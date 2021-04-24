@@ -15,10 +15,12 @@ const { PubSub, v1 } = require('@google-cloud/pubsub');
 const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
 const topicName = process.env.TOPIC_NAME; // Name for the new topic to create
 const subscriptionName = process.env.SUBSCRIPTION_NAME; // Name for the new topic to create
-// const subscriptionName = 'feedback-subscription'; // Name for the new subscription to create
+const svcAccKeyLocation = process.env.GCP_SVC_ACC_KEY
+
 console.log(`projectId: ${projectId}`);
 console.log(`topicName: ${topicName}`);
 console.log(`subscriptionName: ${subscriptionName}`);
+console.log(`svcAccKeyLocation: ${svcAccKeyLocation}`);
 
 
 let pubSubClasifierSubscriberClient = new v1.SubscriberClient();
@@ -32,9 +34,17 @@ app
   .use(recommendations) // Call recommendations route
   .use((err, req, res, next) => { // error handling
     res.status(err.status || 500)
+      // Validation
     if (err.status === 400) {
       res.send({'error': 'Could not decode feedback request: JSON parsing failed!!'})
-    } else {
+    }
+    else if (_.isNil(req.body.feedback)) {
+      const msg = 'Missing input param "feedback".';
+      console.log(msg);
+      res.status(400).send(msg);
+      return;
+    } 
+    else {
       res.send({'error': `${err.status} - ${err}`})
     }
   })
