@@ -5,3 +5,4 @@ k8s-knative-classifier-course/analysis-func/node_modules/
 k8s-knative-classifier-course/trigger-func/node_modules/
 k8s-knative-classifier-course/trigger-func/.env
 k8s-knative-classifier-course/analysis-func/.env
+k8s-knative-classifier-course/analysis-func/.env

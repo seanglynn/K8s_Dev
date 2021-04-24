@@ -14,4 +14,5 @@ gcloud pubsub topics $action $TOPIC_2
 
 gcloud pubsub subscriptions $action ${TOPIC_1}-subscription --topic=$TOPIC_1
 gcloud pubsub subscriptions $action ${TOPIC_2}-subscription --topic=$TOPIC_2
+gcloud pubsub subscriptions $action ${TOPIC_2}-reporting-subscription --topic=$TOPIC_2
 

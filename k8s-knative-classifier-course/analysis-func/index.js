@@ -1,18 +1,27 @@
 'use strict'
 
 require('dotenv').config()
-
 const express = require('express')
 const router = express.Router()
-
 const uid = require('uid');
-
 // [START firestore_limit_to_last_query]
 const {Firestore} = require('@google-cloud/firestore');
 
-var admin = require("firebase-admin");
 
-var serviceAccount = require("./sglynnbot-key.json");
+const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
+const createdTopicName = process.env.CREATED_TOPIC_NAME; // Name for the new topic to create
+const classifiedTopicName = process.env.CLASSIFIED_TOPIC_NAME; // Name for the new topic to create
+const subscriptionName = process.env.SUBSCRIPTION_NAME; // Name for the new topic to create
+const svcAccKeyLocation = process.env.GCP_SVC_ACC_KEY
+
+console.log(`projectId: ${projectId}`);
+console.log(`createdTopicName: ${createdTopicName}`);
+console.log(`classifiedTopicName: ${classifiedTopicName}`);
+console.log(`subscriptionName: ${subscriptionName}`);
+console.log(`svcAccKeyLocation: ${svcAccKeyLocation}`);
+
+var admin = require("firebase-admin");
+var serviceAccount = require(svcAccKeyLocation);
 
 // TODO - align svc accounts
 admin.initializeApp({
@@ -21,16 +30,6 @@ admin.initializeApp({
 
 // Imports the Google Cloud client library
 const { PubSub, v1 } = require('@google-cloud/pubsub');
-
-const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
-const createdTopicName = process.env.CREATED_TOPIC_NAME; // Name for the new topic to create
-const classifiedTopicName = process.env.CLASSIFIED_TOPIC_NAME; // Name for the new topic to create
-const subscriptionName = process.env.SUBSCRIPTION_NAME; // Name for the new topic to create
-
-console.log(`projectId: ${projectId}`);
-console.log(`createdTopicName: ${createdTopicName}`);
-console.log(`classifiedTopicName: ${classifiedTopicName}`);
-console.log(`subscriptionName: ${subscriptionName}`);
 
 let pubSubClasifierSubscriberClient = new v1.SubscriberClient();
 const pubSubClient = new PubSub({projectId});
