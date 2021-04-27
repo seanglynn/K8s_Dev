@@ -4,8 +4,8 @@ require('dotenv').config()
 const express = require('express')
 const router = express.Router()
 const uid = require('uid');
-// [START firestore_limit_to_last_query]
-// const {Firestore} = require('@google-cloud/firestore');
+
+const sheetUtils = require('./routes/sheet-utils')
 
 const projectId = process.env.PUBSUB_PROJECT_ID;// Your Google Cloud Platform project ID
 const classifiedTopicName = process.env.CLASSIFIED_TOPIC_NAME; // Name for the new topic to create
@@ -34,7 +34,7 @@ const pubSubClient = new PubSub({projectId});
 const {google} = require('googleapis');
 const auth = new google.auth.GoogleAuth({
   keyFile: svcAccKeyLocation,
-  scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+  scopes: ['https://www.googleapis.com/auth/cloud-platform', 'https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive'],
 });
 const fs = require('fs');
 const readline = require('readline');
@@ -49,11 +49,11 @@ const client = new language.LanguageServiceClient();
 const db = admin.firestore();
 
 // PRINT Google Sheet Vals
-async function listClassificationSheetValues(auth) {
-  const sheets = google.sheets({version: 'v4', auth});
+async function listClassificationSheetValues(sheets) {
   sheets.spreadsheets.values.get({
     spreadsheetId: googleSheetId,
-    range: 'Class Data!A2:E',
+    range: 'A2:E2',
+    // range: 'Class Data!A2:E2',
   }, (err, res) => {
     if (err) return console.log('The API returned an error: ' + err);
     const rows = res.data.values;
@@ -118,9 +118,14 @@ async function listClassificationSheetValues(auth) {
       const doc_id = received_msg.doc_id;
       console.log(`doc_id: ${doc_id}`);
 
+      // Init sheets service
+      const sheets = google.sheets({version: 'v4', auth});
+      await listClassificationSheetValues(sheets);
 
-      await listClassificationSheetValues(auth);
-
+      const range = 'A:E'
+      const appendedSheetsResults = await sheetUtils(sheets, googleSheetId, range, 'USER_ENTERED', received_msg);
+      console.log(`appendedSheetsResults:`);
+      console.log(appendedSheetsResults);
       // Append UID
       // mapped_record.id = doc_id;
 

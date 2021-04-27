@@ -17,6 +17,7 @@
     "express": "^4.16.4",
     "firebase-admin": "^9.5.0",
     "googleapis": "^72.0.0",
+    "promise": "^8.1.0",
     "uid": "^2.0.0"
   },
   "repository": {

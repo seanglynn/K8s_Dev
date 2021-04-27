@@ -28,7 +28,7 @@ gcloud services enable storage-component.googleapis.com
 gcloud services enable storage-api.googleapis.com
 gcloud services enable automl.googleapis.com
 gcloud services enable cloudresourcemanager.googleapis.com
-
+gcloud services enable sheets.googleapis.com
 echo "5. Creating container engine cluster"
 gcloud beta container clusters create ${CLUSTER_NAME} \
     --addons=Istio --istio-config=auth=MTLS_PERMISSIVE \

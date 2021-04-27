@@ -22,6 +22,6 @@ gcloud container clusters delete ${CLUSTER_NAME} --quiet
 gcloud container clusters list
 
 echo "5. Deleting topics"
-./manage-topics.sh delete
+#./manage-topics.sh delete
 
 echo "6. Teardown complete"
