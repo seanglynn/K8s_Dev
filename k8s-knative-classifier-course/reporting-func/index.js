@@ -122,7 +122,7 @@ async function listClassificationSheetValues(sheets) {
       const sheets = google.sheets({version: 'v4', auth});
       await listClassificationSheetValues(sheets);
 
-      const range = 'A:E'
+      const range = 'Sheet1!A1:E1'
       const appendedSheetsResults = await sheetUtils(sheets, googleSheetId, range, 'USER_ENTERED', received_msg);
       console.log(`appendedSheetsResults:`);
       console.log(appendedSheetsResults);

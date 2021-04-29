@@ -14,28 +14,29 @@ const Promise = require('promise');
  */
 async function appendValues(sheetsService, spreadsheetId, range, valueInputOption, _values) {
   return new Promise((resolve, reject) => {
-
-
-
-    // [START sheets_append_values]
-    let values = [
-      [
-        // Cell values ...
-      ],
-      // Additional rows ...
+    let values = _values;
+    let resource = [
+        values['createdAt'],
+        values['feedback'],
+        values['sentimentScore'],
+        values['sentimentMagnitude'],
+        'v1'
+      
     ];
-    // [START_EXCLUDE silent]
-    values = _values;
-    // [END_EXCLUDE]
-    let resource = {
-      values,
-    };
-    sheetsService.spreadsheets.values.append({
-      spreadsheetId,
-      range,
-      valueInputOption,
-      resource,
-    }, (err, result) => {
+    var appendSheetRequest = {
+          spreadsheetId: spreadsheetId ,
+          range: range,
+          valueInputOption: "RAW",
+          resource: {
+              "range": range,
+              "values": [resource]
+          }
+      }
+
+    console.log('Writing record to google sheets:')
+    console.log(resource)
+    sheetsService.spreadsheets.values.append(
+    request1, (err, result) => {
       if (err) {
         // Handle error.
         console.log(err);
@@ -43,7 +44,7 @@ async function appendValues(sheetsService, spreadsheetId, range, valueInputOptio
         reject(err);
         // [END_EXCLUDE]
       } else {
-        console.log(`${result.updates.updatedCells} cells appended.`);
+        console.log(`${result} cells appended.`);
         // [START_EXCLUDE silent]
         resolve(result);
         // [END_EXCLUDE]
